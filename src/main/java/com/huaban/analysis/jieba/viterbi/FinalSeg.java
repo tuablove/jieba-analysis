@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -21,22 +23,23 @@ import com.huaban.analysis.jieba.Node;
 
 public class FinalSeg {
     private static FinalSeg singleInstance;
-    private static final String PROB_EMIT = "/prob_emit.txt";
+    private static final String PROB_EMIT = "/conf/prob_emit.txt";
     private static char[] states = new char[] { 'B', 'M', 'E', 'S' };
     private static Map<Character, Map<Character, Double>> emit;
     private static Map<Character, Double> start;
     private static Map<Character, Map<Character, Double>> trans;
     private static Map<Character, char[]> prevStatus;
     private static Double MIN_FLOAT = -3.14e100;;
+    private static String configRoot;
 
-
-    private FinalSeg() {
+    private FinalSeg(String configRoot) {
+        this.configRoot=configRoot;
     }
 
 
-    public synchronized static FinalSeg getInstance() {
+    public synchronized static FinalSeg getInstance(String configRoot) {
         if (null == singleInstance) {
-            singleInstance = new FinalSeg();
+            singleInstance = new FinalSeg(configRoot);
             singleInstance.loadModel();
         }
         return singleInstance;
@@ -75,8 +78,8 @@ public class FinalSeg {
         transS.put('S', -0.6658631448798212);
         trans.put('S', transS);
 
-        InputStream is = this.getClass().getResourceAsStream(PROB_EMIT);
-        try {
+//        InputStream is = this.getClass().getResourceAsStream(PROB_EMIT);
+        try (InputStream is= Files.newInputStream(Paths.get(configRoot,"prob_emit.txt"))){
             BufferedReader br = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
             emit = new HashMap<Character, Map<Character, Double>>();
             Map<Character, Double> values = null;
@@ -96,13 +99,13 @@ public class FinalSeg {
             Log.error(String.format(Locale.getDefault(), "%s: load model failure!", PROB_EMIT));
         }
         finally {
-            try {
-                if (null != is)
-                    is.close();
-            }
-            catch (IOException e) {
-                Log.error(String.format(Locale.getDefault(), "%s: close failure!", PROB_EMIT));
-            }
+//            try {
+//                if (null != is)
+//                    is.close();
+//            }
+//            catch (IOException e) {
+//                Log.error(String.format(Locale.getDefault(), "%s: close failure!", PROB_EMIT));
+//            }
         }
         Log.debug(String.format(Locale.getDefault(), "model load finished, time elapsed %d ms.",
             System.currentTimeMillis() - s));
@@ -223,5 +226,9 @@ public class FinalSeg {
         }
         if (offset < other.length())
             tokens.add(other.substring(offset));
+    }
+
+    public void reloadConfig() {
+        this.loadModel();
     }
 }

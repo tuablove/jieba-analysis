@@ -6,9 +6,14 @@ package com.huaban.analysis.jieba;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
+import com.qianxinyao.analysis.jieba.keyword.Keyword;
+import com.qianxinyao.analysis.jieba.keyword.TFIDFAnalyzer;
 import junit.framework.TestCase;
 
 import org.junit.Test;
@@ -21,7 +26,7 @@ import com.huaban.analysis.jieba.JiebaSegmenter.SegMode;
  * 
  */
 public class JiebaSegmenterTest extends TestCase {
-    private JiebaSegmenter segmenter = new JiebaSegmenter();
+    private JiebaSegmenter segmenter = new JiebaSegmenter("/Users/tobin/java/git/p/jieba-analysis/conf");
     String[] sentences =
             new String[] {
                           "找小姐",
@@ -119,7 +124,7 @@ public class JiebaSegmenterTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        WordDictionary.getInstance().init(Paths.get("conf"));
+        WordDictionary.getInstance("").init(Paths.get("conf"));
     }
 
 
@@ -128,7 +133,26 @@ public class JiebaSegmenterTest extends TestCase {
         super.tearDown();
     }
 
+    @Test
+    public void testMode()
+    {
 
+//        String sentence="中学教学设计";
+        String sentence="学科教学（化学）";
+//        String sentence="学科教学（英语）[045108]";
+        List<SegToken> tokens = segmenter.process(sentence, SegMode.SEARCH);
+        System.out.print(String.format(Locale.getDefault(), "\n%s=%s", sentence, tokens.toString()));
+        tokens = segmenter.process(sentence, SegMode.INDEX);
+        System.out.print(String.format(Locale.getDefault(), "\n%s=%s", sentence, tokens.toString()));
+        List<String> strings = segmenter.sentenceProcess(sentence);
+        System.out.print(String.format(Locale.getDefault(), "\n%s=%s", sentence, String.join(",",strings)));
+        TFIDFAnalyzer tfidfAnalyzer=new TFIDFAnalyzer("/Users/tobin/java/git/p/jieba-analysis/conf");
+        List<Keyword> keywords = tfidfAnalyzer.analyze(sentence, Integer.MAX_VALUE);
+        System.out.println(String.format(Locale.getDefault(), "\n%s=  %s", sentence, keywords.stream().map(item->item.getName()+":"+item.getTfidfvalue()).collect(Collectors.joining("|"))));
+        TFIDFAnalyzer.reloadConfig("/Users/tobin/java/git/p/jieba-analysis/conf");
+        keywords = tfidfAnalyzer.analyze("学科教学（数学）", Integer.MAX_VALUE);
+        System.out.println(String.format(Locale.getDefault(), "\n%s=  %s", sentence, keywords.stream().map(item->item.getName()+":"+item.getTfidfvalue()).collect(Collectors.joining("|"))));
+    }
     @Test
     public void testCutForSearch() {
         for (String sentence : sentences) {

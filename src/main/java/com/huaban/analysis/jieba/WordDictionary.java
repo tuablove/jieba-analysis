@@ -1,14 +1,12 @@
 package com.huaban.analysis.jieba;
 
-import java.io.BufferedReader;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -19,7 +17,7 @@ import java.util.Set;
 
 public class WordDictionary {
     private static WordDictionary singleton;
-    private static final String MAIN_DICT = "/dict.txt";
+    private static final String MAIN_DICT = "/conf/dict.txt";
     private static String USER_DICT_SUFFIX = ".dict";
 
     public final Map<String, Double> freqs = new HashMap<String, Double>();
@@ -27,18 +25,20 @@ public class WordDictionary {
     private Double minFreq = Double.MAX_VALUE;
     private Double total = 0.0;
     private DictSegment _dict;
+    private static String configRoot;
 
 
-    private WordDictionary() {
+    private WordDictionary(String configRoot) {
+        this.configRoot=configRoot;
         this.loadDict();
     }
 
 
-    public static WordDictionary getInstance() {
+    public static WordDictionary getInstance(String configRoot) {
         if (singleton == null) {
             synchronized (WordDictionary.class) {
                 if (singleton == null) {
-                    singleton = new WordDictionary();
+                    singleton = new WordDictionary(configRoot);
                     return singleton;
                 }
             }
@@ -100,7 +100,13 @@ public class WordDictionary {
 
     public void loadDict() {
         _dict = new DictSegment((char) 0);
-        InputStream is = this.getClass().getResourceAsStream(MAIN_DICT);
+        InputStream is = null;
+        try {
+            is = Files.newInputStream(Paths.get(configRoot, "dict.txt"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+//        InputStream is = this.getClass().getResourceAsStream(MAIN_DICT);
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
 

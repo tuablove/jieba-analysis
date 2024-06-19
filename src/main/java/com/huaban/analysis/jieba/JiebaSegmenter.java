@@ -10,9 +10,13 @@ import com.huaban.analysis.jieba.viterbi.FinalSeg;
 
 
 public class JiebaSegmenter {
-    private static WordDictionary wordDict = WordDictionary.getInstance();
-    private static FinalSeg finalSeg = FinalSeg.getInstance();
+    private static WordDictionary wordDict;
+    private static FinalSeg finalSeg;
 
+    public JiebaSegmenter(String configRoot) {
+        wordDict = WordDictionary.getInstance(configRoot);
+        finalSeg = FinalSeg.getInstance(configRoot);
+    }
     public static enum SegMode {
         INDEX,
         SEARCH
@@ -230,5 +234,14 @@ public class JiebaSegmenter {
 
         }
         return tokens;
+    }
+
+    public static void reloadConfig(String configRootFolder){
+        if(wordDict!=null) {
+            wordDict.loadDict();
+        }
+        if(finalSeg!=null) {
+            finalSeg.reloadConfig();
+        }
     }
 }
